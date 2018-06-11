@@ -9,7 +9,7 @@
     "location",
     "user"
   ]
-  revision = "23c15af8da9d057a18eac5aaf2e397b103dae944"
+  revision = "6b9db8f427718cfbae808a6fe9b3605fefc34ae7"
 
 [[projects]]
   branch = "master"
@@ -20,7 +20,7 @@
     "lib/plugins/auth",
     "models"
   ]
-  revision = "f0d6a9bc7581e1ef1c6506c3f3ff93b5efa5da90"
+  revision = "d1e3158ade34ce539a7def27807b70d50ed69d12"
 
 [[projects]]
   name = "github.com/BurntSushi/toml"

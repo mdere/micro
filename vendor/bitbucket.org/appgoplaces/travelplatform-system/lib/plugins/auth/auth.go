@@ -158,9 +158,9 @@ func parseToken(bearerToken string) (userIdentity, error) {
 		subjects := strings.Split(claims.Subject, ",")
 		id, err := strconv.ParseInt(subjects[1], 10, 64)
 		return userIdentity{id, subjects[0]}, err
-	} else {
-		return userIdentity{}, errors.Wrap(err, "parsing jwt token string")
 	}
+	
+	return userIdentity{}, errors.Wrap(err, "parsing jwt token string")
 }
 
 func getBearerToken(authorization []string) string {
@@ -168,7 +168,6 @@ func getBearerToken(authorization []string) string {
 		value := authorization[0]
 		if bearerExists, err := regexp.MatchString("Bearer", value); bearerExists && err == nil {
 			bearerData := strings.Split(value, " ")
-			log.Log(bearerData)
 			if len(bearerData) > 1 {
 				return bearerData[1]
 			}
