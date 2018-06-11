@@ -1,0 +1,192 @@
+syntax = "proto3";
+
+package blogData;
+
+import "bitbucket.org/appgoplaces/service-protos/vendor/gogo.proto";
+import "bitbucket.org/appgoplaces/service-protos/vendor/src/google/protobuf/struct.proto";
+
+service BlogData {
+  rpc AddBlogDomain(AddBlogDomainRequest) returns (AddBlogDomainResponse) {};
+  rpc UpdateBlogDomain(UpdateBlogDomainRequest) returns (UpdateBlogDomainResponse) {};
+  rpc DeleteBlogDomain(DeleteBlogDomainRequest) returns (DeleteBlogDomainResponse) {};
+  rpc GetBlogDomain(GetBlogDomainRequest) returns (GetBlogDomainResponse) {};
+  rpc GetBlogDomains(GetBlogDomainsRequest) returns (GetBlogDomainsResponse) {};
+  rpc GetBlogs(GetBlogsRequest) returns (GetBlogsResponse) {};
+  rpc UpdateBlog(UpdateBlogRequest) returns (UpdateBlogResponse) {};
+  rpc TagSuggestion(TagSuggestionRequest) returns (TagSuggestionResponse) {};
+  rpc CreateTag(CreateTagRequest) returns (CreateTagResponse) {};
+
+}
+
+message CreateTagRequest {
+  string tagName = 1;
+}
+
+message CreateTagResponse {
+  bool   success = 1;
+  string message = 2;
+}
+
+message TagSuggestionRequest {
+  string tagName = 1;
+}
+
+message TagSuggestionResponse {
+  repeated Tag tags    = 1;
+  string       message = 2;
+}
+
+message BlogDomain {
+  google.protobuf.Struct tableName       = 1 [(gogoproto.moretags) = "sql:\"crawler.blogger_domain\" pg:\",discard_unknown_columns\""];
+  int64                  bloggerDomainId = 2 [(gogoproto.moretags) = "sql:\"blogger_domain_id,pk\""];
+  int64                  userId          = 3 [(gogoproto.moretags) = "sql:\"user_id\""];
+  string                 url             = 4 [(gogoproto.moretags) = "sql:\"url\""];
+  bool                   enabled         = 5 [(gogoproto.moretags) = "sql:\"enabled\""];
+}
+
+message AddBlogDomainRequest {
+  string url = 1;
+}
+
+message AddBlogDomainResponse {
+  bool   success = 1;
+  string message = 2;
+}
+
+message UpdateBlogDomainRequest {
+  BlogDomain blogDomain = 1;
+}
+
+message UpdateBlogDomainResponse {
+  bool   success = 1;
+  string message = 2;
+}
+
+message DeleteBlogDomainRequest {
+  BlogDomain blogDomain = 1;
+}
+
+message DeleteBlogDomainResponse {
+  bool success   = 1;
+  string message = 2;
+}
+
+message GetBlogDomainRequest {
+  BlogDomain blogDomain = 1;
+}
+
+message GetBlogDomainResponse {
+  BlogDomain blogDomain = 1;
+  string     message    = 2;
+}
+
+message UpdateBlogAPI {
+  int64                blogId  = 1;
+  repeated UpdatePlace places  = 2;
+  repeated UpdateTag   tags    = 3;
+}
+
+message UpdatePlace {
+  int64  placeId = 1;
+  string venueId = 2;
+  string action  = 3;
+}
+
+message BlogPlace {
+  google.protobuf.Struct tableName   = 1 [(gogoproto.moretags) = "sql:\"discovr.blog_place\" pg:\",discard_unknown_columns\""];
+  int64                  blogPlaceId = 2 [(gogoproto.moretags) = "sql:\"blog_place_id,pk\""];
+  int64                  blogId      = 3 [(gogoproto.moretags) = "sql:\"blog_id\""];
+  int64                  placeId     = 4 [(gogoproto.moretags) = "sql:\"place_id\""];
+  string                 venueId     = 5 [(gogoproto.moretags) = "sql:\"venue_id\""];
+}
+
+message UpdateTag {
+  int64  tagId  = 1;
+  string action = 2;
+}
+
+message BlogTag {
+  google.protobuf.Struct tableName = 1 [(gogoproto.moretags) = "sql:\"tag.blog_tag\" pg:\",discard_unknown_columns\""];
+  int64                  blogTagId = 2 [(gogoproto.moretags) = "sql:\"blog_tag_id,pk\""];
+  int64                  blogId    = 3 [(gogoproto.moretags) = "sql:\"blog_id\""];
+  int64                  tagId     = 4 [(gogoproto.moretags) = "sql:\"tag_id\""];
+}
+
+message UpdateBlogRequest {
+  int64                blogId = 1;
+  repeated UpdatePlace places = 2;
+  repeated UpdateTag   tags   = 3;
+  string               status = 4;
+}
+
+message UpdateBlogResponse {
+  bool   success = 1;
+  string message = 2;
+}
+
+message GetBlogDomain {
+  int64  id         = 1;
+  string url        = 2;
+  int64  userId     = 3;
+  bool   enabled    = 4;
+  int32  blog_count = 5;
+}
+
+message GetBlogDomainsRequest {
+
+}
+
+message GetBlogDomainsResponse {
+  repeated GetBlogDomain blogDomains = 1;
+}
+
+message GetBlogsRequest {
+  int64 blogDomainId = 1;
+}
+
+// Tag is a full object to repersent the actual Tags
+message PlaceTag {
+  int64  placeTagId = 1;
+  int64  placeId    = 2;
+  int64  tagId      = 3;
+  string tagName    = 4;
+}
+
+
+message Tag {
+  google.protobuf.Struct tableName = 1 [(gogoproto.moretags) = "sql:\"tag.tag\" pg:\",discard_unknown_columns\""];
+  int64                  id        = 2 [(gogoproto.moretags) = "sql:\",pk\""];
+  string                 tagName   = 3 [(gogoproto.moretags) = "sql:\"tag_name\""];
+}
+
+message Place {
+  google.protobuf.Struct tableName        = 1 [(gogoproto.moretags) = "sql:\"discovr.place\" pg:\",discard_unknown_columns\""];
+  int64                  id               = 2 [(gogoproto.moretags) = "sql:\",pk\""];
+  string                 name             = 3 [(gogoproto.moretags) = "sql:\"name\""];
+  int64                  locationId       = 4 [(gogoproto.moretags) = "sql:\"location_id\""];
+  string                 workPhone        = 5 [(gogoproto.moretags) = "sql:\"work_phone\""];
+  string                 formattedAddress = 6 [(gogoproto.moretags) = "sql:\"formatted_address\""];
+  repeated int64         placeTypes       = 7 [(gogoproto.moretags) = "sql:\"types\""];
+}
+
+message BlogStatus {
+  google.protobuf.Struct tableName = 1 [(gogoproto.moretags) = "sql:\"crawler.blog_status\" pg:\",discard_unknown_columns\""];
+  int64                  id        = 2 [(gogoproto.moretags) = "sql:\",pk\""];
+  string                 status    = 3 [(gogoproto.moretags) = "sql:\"status\""];
+}
+
+message Blog {
+  google.protobuf.Struct tableName    = 1 [(gogoproto.moretags) = "sql:\"crawler.blog\""];
+  int64                  Id           = 2 [(gogoproto.moretags) = "sql:\",pk\""];
+  string                 url          = 3 [(gogoproto.moretags) = "sql:\"url\""];
+  int64                  domainId     = 4 [(gogoproto.moretags) = "sql:\"blogger_domain_id\""];
+  repeated Place         places       = 5 [(gogoproto.moretags) = "pg:\",many2many:discovr.blog_place,joinFK:place_id\""];
+  repeated Tag           tags         = 6 [(gogoproto.moretags) = "pg:\",many2many:tag.blog_tag,joinFK:tag_id\""];
+  int64                  blogStatusId = 7 [(gogoproto.moretags) = "sql:\"blog_status_id\""];     
+  BlogStatus             blogStatus   = 8 [(gogoproto.moretags) = "pg:\"fk:blog_status_id\""];
+}
+
+message GetBlogsResponse {
+  repeated Blog  blogs = 1;
+  repeated int32 pages = 2;
+}

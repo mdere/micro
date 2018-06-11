@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package user;
+
+service User {
+  rpc Register(RegisterRequest) returns (RegisterResponse) {};
+  rpc Signin(SigninRequest) returns (SigninResponse) {};
+  rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse) {};
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {};
+  rpc VerifyCode(VerifyRequest) returns (VerifyResponse) {};
+  rpc SendVerifyCode(SendVerifyCodeRequest) returns (SendVerifyCodeResponse) {}
+  rpc Info(InfoRequest) returns (InfoResponse) {};
+  rpc UpdatePreference(UpdatePreferenceRequest) returns (UpdatePreferenceResponse) {};
+  rpc GetAllPreferences(GetAllPreferencesRequest) returns (GetAllPreferencesResponse) {};
+}
+
+message RegionPreferences {
+  int64 regionId = 1;
+  string name    = 2;
+  string imgSrc  = 3;
+}
+
+message CountryPreferences {
+  int64 countryId = 1;
+  int64 regionId  = 2;
+  string imgSrc   = 3;
+  string name     = 4;
+}
+
+message ActivityPreferences {
+  int64 activityId = 1;
+  string imgSrc    = 2;
+  string name      = 3;
+}
+
+message RegionCountryPreferences {
+  RegionPreferences region              = 1;
+  repeated CountryPreferences countries = 2;
+}
+
+message GetAllPreferencesRequest {}
+
+message GetAllPreferencesResponse {
+  repeated RegionPreferences regions                = 1;
+  repeated RegionCountryPreferences regionGroupings = 2;
+  repeated ActivityPreferences activities           = 3;
+}
+
+message UpdatePreferenceRequest {
+  int64 userId = 1;
+  repeated int64 countries  = 2;
+  repeated int64 activities = 3;
+}
+
+message UpdatePreferenceResponse {
+  bool success = 1;
+}
+
+message UserInfo {
+  string email         = 1;
+  string firstname     = 2;
+  string lastname      = 3;
+  bool verified        = 4;
+  bool preferenceSetup = 5;
+}
+
+message InfoRequest {
+  int64 userId = 1;
+}
+
+message InfoResponse {
+  UserInfo userInfo = 1;
+}
+
+message RegisterRequest {
+  string email     = 1;
+  string password  = 4;
+  int32  mobile    = 5;
+}
+
+message RegisterResponse {
+  bool success       = 1;
+  string verifyToken = 2;
+}
+
+message SigninRequest {
+  string email    = 1;
+  string password = 2;
+}
+
+message SigninResponse {
+  bool success = 1;
+  bool verified = 2;
+  bool preferenceSetup = 3;
+  string jwtToken = 4;
+}
+
+message RequestPasswordResetRequest {
+  string email = 1;
+}
+
+message RequestPasswordResetResponse {
+  bool success = 1;
+}
+
+message ResetPasswordRequest {
+  string token = 1;
+  string password = 2;
+}
+
+message ResetPasswordResponse {
+  bool success = 1;
+}
+
+message VerifyRequest {
+  string vtoken = 1;
+  int32 vcode = 2;
+}
+
+message VerifyResponse {
+  bool success = 1;
+  string jwtToken = 2;
+}
+
+message SendVerifyCodeRequest {
+  int64  userId   = 1;
+  string email  = 2;
+  int32  mobile = 3;
+}
+
+message SendVerifyCodeResponse {
+  string verifyToken = 1;
+  string jwtToken    = 2;
+}

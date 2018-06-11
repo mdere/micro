@@ -1,0 +1,178 @@
+syntax = "proto3";
+
+package location;
+
+import "bitbucket.org/appgoplaces/service-protos/vendor/gogo.proto";
+// import "bitbucket.org/appgoplaces/service-protos/vendor/src/google/protobuf/struct.proto";
+
+service Location {
+	rpc SuggestCity(SuggestCityRequest) returns (SuggestCityResponse) {}
+	rpc QueryLocations(QueryLocationRequest) returns (QueryLocationResponse) {}
+	rpc ExtractPlaceData(ExtractPlaceDataRequest) returns (ExtractPlaceDataResponse) {}
+}
+
+message QueryLocationRequest {
+	string query  = 1;
+	int64  cityId = 2;
+}
+
+message PlaceResults {
+	string name     = 1;
+	string address  = 2;
+	string venue_id = 3;
+}
+
+message QueryLocationResponse {
+	repeated PlaceResults placeResults = 1;
+	string   			  message      = 2;
+}
+
+message ExtractPlaceDataRequest {
+	string query     = 1;
+	bool   getAll    = 2;
+}
+
+message ExtractPlaceDataResponse {
+	string											message				 = 1;
+}
+
+message LatLng {
+	double lat = 1;
+	double lng = 2;
+}
+
+message LatLngBounds  {
+	LatLng northEast = 1;
+	LatLng southWest = 2;
+}
+
+message Geometry {
+	LatLng          location     = 1;
+	string          locationType = 2;
+	LatLngBounds    bounds       = 3;
+	LatLngBounds    viewport     = 4;
+	repeated string types				 = 5;
+}
+
+message OpeningHoursOpenClose {
+	// Day is a number from 0–6, corresponding to the days of the week, starting on
+	// Sunday. For example, 2 means Tuesday.
+	int32  day = 1;
+	// Time contains a time of day in 24-hour hhmm format. Values are in the range
+	// 0000–2359. The time will be reported in the place’s time zone.
+	string time = 2;
+}
+
+message OpeningHoursPeriod {
+	// Open is when the place opens.
+	OpeningHoursOpenClose open  = 1;
+	// Close is when the place closes.
+	OpeningHoursOpenClose close = 2;
+}
+
+message OpeningHours {
+	// OpenNow is a boolean value indicating if the place is open at the current time.
+	// Please note, this field will be null if it isn't present in the response.
+	bool                        openNow           = 1;
+	// Periods is an array of opening periods covering seven days, starting from Sunday,
+	// in chronological order.
+	repeated OpeningHoursPeriod periods           = 2;
+	// weekdayText is an array of seven strings representing the formatted opening hours
+	// for each day of the week, for example "Monday: 8:30 am – 5:30 pm".
+	repeated string             weekdayText       = 3;
+	// PermanentlyClosed indicates that the place has permanently shut down. Please
+	// note, this field will be null if it isn't present in the response.
+	bool                        permanentlyClosed = 4;
+}
+
+message Photo {
+	// PhotoReference is used to identify the photo when you perform a Photo request.
+	string photoReference            = 1;
+	// Height is the maximum height of the image.
+	int32 height                     = 2;
+	// Width is the maximum width of the image.
+	int32 width                      = 3;
+	// htmlAttributions contains any required attributions.
+	repeated string HTMLAttributions = 4;
+}
+
+message AltID {
+	// PlaceID is the APP scoped Place ID that you received when you initially created
+	// this Place, before it was given a Google wide Place ID.
+	string placeID = 1;
+	// Scope is the scope of this alternative place ID. It will always be APP,
+	// indicating that the alternative place ID is recognised by your application only.
+	string scope   = 2;
+}
+
+// PlacesSearchResult is an individual Places API search result
+message PlacesSearchResult {
+	// FormattedAddress is the human-readable address of this place
+	string          formattedAddress  = 1;
+	// Geometry contains geometry information about the result, generally including the
+	// location (geocode) of the place and (optionally) the viewport identifying its
+	// general area of coverage.
+	Geometry        addressGeometry   = 2;
+	// Name contains the human-readable name for the returned result. For establishment
+	// results, this is usually the business name.
+	string          name              = 3;
+	// Icon contains the URL of a recommended icon which may be displayed to the user
+	// when indicating this result.
+	string          icon              = 4;
+	// PlaceID is a textual identifier that uniquely identifies a place.
+	string          placeID           = 5;
+	// Scope indicates the scope of the PlaceID.
+	string          scope             = 6;
+	// Rating contains the place's rating, from 1.0 to 5.0, based on aggregated user
+	// reviews.
+	float           rating            = 7;
+	// Types contains an array of feature types describing the given result.
+	repeated string types             = 8;
+	// OpeningHours may contain whether the place is open now or not.
+	OpeningHours    openingHours      = 9;
+	// Photos is an array of photo objects, each containing a reference to an image.
+	repeated Photo  photos            = 10;
+	// AltIDs — An array of zero, one or more alternative place IDs for the place, with
+	// a scope related to each alternative ID.
+	repeated AltID  altIDs            = 11;
+	// PriceLevel is the price level of the place, on a scale of 0 to 4.
+	int32           priceLevel        = 12;
+	// Vicinity contains a feature name of a nearby location.
+	string          vicinity          = 13;
+	// PermanentlyClosed is a boolean flag indicating whether the place has permanently
+	// shut down.
+	bool            permanentlyClosed = 14;
+
+	int32			city_id = 15;
+	int32			country_id = 16;
+}
+
+// Foursquare Iteration
+
+message QueryRequest {
+    int64  cityId = 1;
+    string query  = 2;
+}
+
+message Place {
+    string name     = 1 [(gogoproto.moretags) = "sql:\"name\""];
+    string address  = 2 [(gogoproto.moretags) = "sql:\"address\""];
+    string venue_id = 3 [(gogoproto.moretags) = "sql:\"venue_id\""];
+}
+
+message QueryResponse {
+    repeated Place places = 1;
+}
+
+message SuggestCityRequest {
+	string query  = 2;
+}
+
+message SearchCityCountry {
+	int64  cityId       = 1 [(gogoproto.moretags) = "sql:\"city_id\""];
+	string searchResult = 2 [(gogoproto.moretags) = "sql:\"search_result\""];
+}
+
+message SuggestCityResponse {
+	repeated SearchCityCountry cities = 1;
+}
