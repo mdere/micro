@@ -50,7 +50,6 @@ func (a *auth) Commands() []cli.Command {
 func (a *auth) Handler() plugin.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Log("--------------------")
 			for _, url := range exclude {
 				if url == strings.ToLower(r.RequestURI) {
 					h.ServeHTTP(w, r)
@@ -59,14 +58,13 @@ func (a *auth) Handler() plugin.Handler {
 			}
 			// GET Token and append to header
 			bearerToken := getBearerToken(r.Header["Authorization"])
-			log.Log(bearerToken)
 			if len(bearerToken) > 0 {
 				ok, userIdentification, err := parseToken(bearerToken)
 				log.Log(ok, userIdentification, err)
 				if ok && err == nil {
 					var user userMap
 					var qErr error
-					if strings.Contains(r.RequestURI, "management") && userIdentification.System == "management" {
+					if isMangementOnly(r.RequestURI) && userIdentification.System == "management" {
 						qErr = user.authenticateManagement(userIdentification)
 					} else {
 						qErr = user.authenticateUser(userIdentification)
@@ -99,10 +97,14 @@ func (a *auth) Handler() plugin.Handler {
 				return
 			}
 			h.ServeHTTP(w, r)
-			log.Log("-------------------")
 			return
 		})
 	}
+}
+
+func isMangementOnly(uri string) bool {
+	return strings.Contains(uri, "management") ||
+		strings.Contains(uri, "crawler")
 }
 
 type userMap struct {
