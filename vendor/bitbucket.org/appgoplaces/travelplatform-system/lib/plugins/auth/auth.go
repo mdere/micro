@@ -11,17 +11,18 @@ import (
 
 	"github.com/micro/go-log"
 	// "fmt"
-	"strings"
-	"regexp"
 	"encoding/json"
-	"github.com/pkg/errors"
-	jwt "github.com/dgrijalva/jwt-go"
+	"regexp"
+	"strings"
+
 	rdbms "bitbucket.org/appgoplaces/travelplatform-system/db/rdbms"
 	models "bitbucket.org/appgoplaces/travelplatform-system/models"
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/pkg/errors"
 )
 
 var (
-	db = rdbms.Connect("micro")
+	db        = rdbms.Connect("micro")
 	secretKey = []byte("secret-key")
 )
 
@@ -52,7 +53,7 @@ func (a *auth) Handler() plugin.Handler {
 			log.Log("--------------------")
 			for _, url := range exclude {
 				if url == strings.ToLower(r.RequestURI) {
-					h.ServeHTTP(w,r)
+					h.ServeHTTP(w, r)
 					return
 				}
 			}
@@ -63,7 +64,8 @@ func (a *auth) Handler() plugin.Handler {
 				if err == nil {
 					var user userMap
 					var qErr error
-					if strings.Contains(r.RequestURI, "management") {
+					if strings.Contains(r.RequestURI, "management") && userIdentification.System == "management" {
+						log.Log("IM IN MANAGEMENT")
 						qErr = user.authenticateManagement(userIdentification)
 					} else {
 						qErr = user.authenticateUser(userIdentification)
@@ -77,7 +79,7 @@ func (a *auth) Handler() plugin.Handler {
 					if !user.Valid {
 						// respond back 401
 						log.Log("NOT AUTHORIZED")
-						return 
+						return
 					}
 					data, jsonErr := json.Marshal(&user)
 					if jsonErr != nil {
@@ -87,7 +89,7 @@ func (a *auth) Handler() plugin.Handler {
 						return
 					}
 					r.Header.Set("user", string(data))
-				}  else if vErr, ok := errors.Cause(err).(*jwt.ValidationError); ok  {
+				} else if vErr, ok := errors.Cause(err).(*jwt.ValidationError); ok {
 					if vErr.Errors&jwt.ValidationErrorExpired > 0 {
 						// respond back 401 and expired
 						log.Log("NOT AUTHORIZED AND EXPIRED")
@@ -95,7 +97,7 @@ func (a *auth) Handler() plugin.Handler {
 					}
 				}
 			}
-			h.ServeHTTP(w,r)
+			h.ServeHTTP(w, r)
 			log.Log("-------------------")
 			return
 		})
@@ -110,34 +112,36 @@ type userMap struct {
 }
 
 type userIdentity struct {
-	Id    int64
-	Email string
+	Id     int64
+	Email  string
+	System string
 }
 
 func (u *userMap) authenticateManagement(userIdentify userIdentity) error {
 	user := models.ManagementUser{}
-	_, qErr := db.Query(&user,`SELECT * FROM management_user WHERE email = ? AND management_user_id = ?`, userIdentify.Email, userIdentify.Id)
+	_, qErr := db.Query(&user, `SELECT * FROM management_user WHERE email = ? AND management_user_id = ?`, userIdentify.Email, userIdentify.Id)
 	if qErr != nil {
 		if qErr.Error() != "pg: no rows in result set" {
 			return qErr
 		}
 	}
-	valid := len(user.Email) > 0 && user.Id > 0 && user.Role == "Admin" 
+	valid := len(user.Email) > 0 && user.Id > 0 && user.Role == "Admin"
 	u.Id = user.Id
 	u.Email = user.Email
 	u.Valid = valid
+	u.Role = user.Role
 	return nil
 }
 
 func (u *userMap) authenticateUser(userIdentify userIdentity) error {
 	user := models.User{}
-	_, qErr := db.Query(&user,`SELECT * FROM Users WHERE email = ? AND management_user_id = ?`, userIdentify.Email, userIdentify.Id)
+	_, qErr := db.Query(&user, `SELECT * FROM Users WHERE email = ? AND user_id = ?`, userIdentify.Email, userIdentify.Id)
 	if qErr != nil {
 		if qErr.Error() != "pg: no rows in result set" {
 			return qErr
 		}
 	}
-	valid := len(user.Email) > 0 && user.Id > 0 
+	valid := len(user.Email) > 0 && user.Id > 0
 	u.Id = user.Id
 	u.Email = u.Email
 	u.Valid = valid
@@ -157,9 +161,12 @@ func parseToken(bearerToken string) (userIdentity, error) {
 		// Need to break down Subject into UserID model
 		subjects := strings.Split(claims.Subject, ",")
 		id, err := strconv.ParseInt(subjects[1], 10, 64)
-		return userIdentity{id, subjects[0]}, err
+		log.Log(subjects)
+		if len(subjects) == 3 {
+			return userIdentity{id, subjects[0], subjects[2]}, err
+		}
 	}
-	
+
 	return userIdentity{}, errors.Wrap(err, "parsing jwt token string")
 }
 
