@@ -32,8 +32,8 @@ var exclude = []string{
 	"/user/requestpasswordreset",
 	"/user/sendverifycode",
 	"/user/verifycode",
-	"/management/user/signin",
-	"/management/user/register",
+	"/management/user/service/signin",
+	"/management/user/service/register",
 }
 
 type auth struct {
@@ -59,43 +59,44 @@ func (a *auth) Handler() plugin.Handler {
 			}
 			// GET Token and append to header
 			bearerToken := getBearerToken(r.Header["Authorization"])
+			log.Log(bearerToken)
 			if len(bearerToken) > 0 {
-				userIdentification, err := parseToken(bearerToken)
-				if err == nil {
+				ok, userIdentification, err := parseToken(bearerToken)
+				log.Log(ok, userIdentification, err)
+				if ok && err == nil {
 					var user userMap
 					var qErr error
 					if strings.Contains(r.RequestURI, "management") && userIdentification.System == "management" {
-						log.Log("IM IN MANAGEMENT")
 						qErr = user.authenticateManagement(userIdentification)
 					} else {
 						qErr = user.authenticateUser(userIdentification)
 					}
 					if qErr != nil {
-						// respond back 500
-						log.Log("qErr")
-						log.Log(qErr)
+						http.Error(w, qErr.Error(), http.StatusBadRequest)
 						return
 					}
 					if !user.Valid {
-						// respond back 401
-						log.Log("NOT AUTHORIZED")
+						http.Error(w, "user identity not valid", http.StatusUnauthorized)
 						return
 					}
 					data, jsonErr := json.Marshal(&user)
 					if jsonErr != nil {
-						log.Log("jsonErr")
-						log.Log(jsonErr)
-						// respond back 500
+						http.Error(w, jsonErr.Error(), http.StatusBadRequest)
 						return
 					}
 					r.Header.Set("user", string(data))
 				} else if vErr, ok := errors.Cause(err).(*jwt.ValidationError); ok {
 					if vErr.Errors&jwt.ValidationErrorExpired > 0 {
-						// respond back 401 and expired
-						log.Log("NOT AUTHORIZED AND EXPIRED")
+						http.Error(w, "jwt token expired", http.StatusUnauthorized)
 						return
 					}
+				} else {
+					http.Error(w, "user failed identity", http.StatusUnauthorized)
+					return
 				}
+			} else {
+				http.Error(w, "jwt not valid", http.StatusUnauthorized)
+				return
 			}
 			h.ServeHTTP(w, r)
 			log.Log("-------------------")
@@ -148,26 +149,30 @@ func (u *userMap) authenticateUser(userIdentify userIdentity) error {
 	return nil
 }
 
-func parseToken(bearerToken string) (userIdentity, error) {
+func parseToken(bearerToken string) (bool, userIdentity, error) {
 	token, err := jwt.ParseWithClaims(bearerToken, &jwt.StandardClaims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
-
 		return secretKey, nil
 	})
-
-	if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid && claims.Valid() == nil {
-		// Need to break down Subject into UserID model
-		subjects := strings.Split(claims.Subject, ",")
-		id, err := strconv.ParseInt(subjects[1], 10, 64)
-		log.Log(subjects)
-		if len(subjects) == 3 {
-			return userIdentity{id, subjects[0], subjects[2]}, err
+	if token != nil {
+		if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid && claims.Valid() == nil {
+			// Need to break down Subject into UserID model
+			subjects := strings.Split(claims.Subject, ",")
+			id, err := strconv.ParseInt(subjects[1], 10, 64)
+			log.Log(subjects)
+			val := userIdentity{
+				Id:    id,
+				Email: subjects[0],
+			}
+			if len(subjects) == 3 {
+				val.System = subjects[2]
+			}
+			return true, val, err
 		}
 	}
-
-	return userIdentity{}, errors.Wrap(err, "parsing jwt token string")
+	return false, userIdentity{}, errors.Wrap(err, "parsing jwt token string")
 }
 
 func getBearerToken(authorization []string) string {
