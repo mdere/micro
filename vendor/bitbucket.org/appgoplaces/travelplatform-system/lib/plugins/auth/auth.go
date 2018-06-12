@@ -136,7 +136,7 @@ func (u *userMap) authenticateManagement(userIdentify userIdentity) error {
 
 func (u *userMap) authenticateUser(userIdentify userIdentity) error {
 	user := models.User{}
-	_, qErr := db.Query(&user, `SELECT * FROM Users WHERE email = ? AND user_id = ?`, userIdentify.Email, userIdentify.Id)
+	_, qErr := db.Query(&user, `SELECT * FROM Users WHERE email = ? AND id = ?`, userIdentify.Email, userIdentify.Id)
 	if qErr != nil {
 		if qErr.Error() != "pg: no rows in result set" {
 			return qErr
