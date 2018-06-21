@@ -20,7 +20,7 @@
     "lib/plugins/auth",
     "models"
   ]
-  revision = "64b654c600969fb2ccfb297150a788a0eb12a60d"
+  revision = "2355c1c55b6c5418662edd537e862f1f8e91d9f4"
 
 [[projects]]
   name = "github.com/BurntSushi/toml"

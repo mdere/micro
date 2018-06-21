@@ -3,7 +3,6 @@ package models
 import (
 	rdbms "bitbucket.org/appgoplaces/travelplatform-system/db/rdbms"
 	pg "github.com/go-pg/pg"
-	"gopkg.in/mgutz/dat.v1/sqlx-runner"
 )
 
 func init() {
@@ -15,7 +14,7 @@ func init() {
 
 type Db struct {
 	Client *pg.DB
-	NewClient *runner.DB
+	// NewClient *runner.DB
 }
 
 func NewDb(service string) *Db {
@@ -25,6 +24,3 @@ func NewDb(service string) *Db {
 	}
 	return &db
 }
-
-
-

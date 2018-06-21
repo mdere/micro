@@ -15,14 +15,13 @@ import (
 	"regexp"
 	"strings"
 
-	rdbms "bitbucket.org/appgoplaces/travelplatform-system/db/rdbms"
 	models "bitbucket.org/appgoplaces/travelplatform-system/models"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
 )
 
 var (
-	db        = rdbms.Connect("micro")
+	db        = models.NewDb("micro_auth")
 	secretKey = []byte("secret-key")
 )
 
@@ -50,7 +49,6 @@ func (a *auth) Commands() []cli.Command {
 func (a *auth) Handler() plugin.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Log("--------------------")
 			for _, url := range exclude {
 				if url == strings.ToLower(r.RequestURI) {
 					h.ServeHTTP(w, r)
@@ -59,14 +57,13 @@ func (a *auth) Handler() plugin.Handler {
 			}
 			// GET Token and append to header
 			bearerToken := getBearerToken(r.Header["Authorization"])
-			log.Log(bearerToken)
 			if len(bearerToken) > 0 {
 				ok, userIdentification, err := parseToken(bearerToken)
 				log.Log(ok, userIdentification, err)
 				if ok && err == nil {
 					var user userMap
 					var qErr error
-					if strings.Contains(r.RequestURI, "management") && userIdentification.System == "management" {
+					if isMangementOnly(r.RequestURI) && userIdentification.System == "management" {
 						qErr = user.authenticateManagement(userIdentification)
 					} else {
 						qErr = user.authenticateUser(userIdentification)
@@ -99,10 +96,14 @@ func (a *auth) Handler() plugin.Handler {
 				return
 			}
 			h.ServeHTTP(w, r)
-			log.Log("-------------------")
 			return
 		})
 	}
+}
+
+func isMangementOnly(uri string) bool {
+	return strings.Contains(uri, "management") ||
+		strings.Contains(uri, "crawler")
 }
 
 type userMap struct {
@@ -119,24 +120,22 @@ type userIdentity struct {
 }
 
 func (u *userMap) authenticateManagement(userIdentify userIdentity) error {
-	user := models.ManagementUser{}
-	_, qErr := db.Query(&user, `SELECT * FROM management_user WHERE email = ? AND management_user_id = ?`, userIdentify.Email, userIdentify.Id)
+	user, qErr := db.GetUser(userIdentify.Email, userIdentify.Id)
 	if qErr != nil {
 		if qErr.Error() != "pg: no rows in result set" {
 			return qErr
 		}
 	}
-	valid := len(user.Email) > 0 && user.Id > 0 && user.Role == "Admin"
+	valid := len(user.Email) > 0 && user.Id > 0 && user.Verified && user.Enabled
 	u.Id = user.Id
 	u.Email = user.Email
 	u.Valid = valid
-	u.Role = user.Role
+	u.Role = user.ManagementRole.RoleName
 	return nil
 }
 
 func (u *userMap) authenticateUser(userIdentify userIdentity) error {
-	user := models.User{}
-	_, qErr := db.Query(&user, `SELECT * FROM Users WHERE email = ? AND id = ?`, userIdentify.Email, userIdentify.Id)
+	user, qErr := db.GetUserByEmail(userIdentify.Email)
 	if qErr != nil {
 		if qErr.Error() != "pg: no rows in result set" {
 			return qErr
@@ -144,7 +143,7 @@ func (u *userMap) authenticateUser(userIdentify userIdentity) error {
 	}
 	valid := len(user.Email) > 0 && user.Id > 0
 	u.Id = user.Id
-	u.Email = u.Email
+	u.Email = user.Email
 	u.Valid = valid
 	return nil
 }
