@@ -20,7 +20,8 @@ type Db struct {
 func NewDb(service string) *Db {
 	db := Db{
 		Client: rdbms.Connect(service),
-		// NewClient: rdbms.ConnectNew(service),
 	}
 	return &db
 }
+
+// I want to be able to inject interface types and make it ready to be called

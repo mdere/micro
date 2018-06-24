@@ -8,10 +8,6 @@ It is generated from these files:
 	bitbucket.org/appgoplaces/service-protos/blog-data/blog-data.proto
 
 It has these top-level messages:
-	CreateTagRequest
-	CreateTagResponse
-	TagSuggestionRequest
-	TagSuggestionResponse
 	BlogDomain
 	AddBlogDomainRequest
 	AddBlogDomainResponse
@@ -79,8 +75,6 @@ type BlogDataService interface {
 	GetBlogDomains(ctx context.Context, in *GetBlogDomainsRequest, opts ...client.CallOption) (*GetBlogDomainsResponse, error)
 	GetBlogs(ctx context.Context, in *GetBlogsRequest, opts ...client.CallOption) (*GetBlogsResponse, error)
 	UpdateBlog(ctx context.Context, in *UpdateBlogRequest, opts ...client.CallOption) (*UpdateBlogResponse, error)
-	TagSuggestion(ctx context.Context, in *TagSuggestionRequest, opts ...client.CallOption) (*TagSuggestionResponse, error)
-	CreateTag(ctx context.Context, in *CreateTagRequest, opts ...client.CallOption) (*CreateTagResponse, error)
 }
 
 type blogDataService struct {
@@ -171,26 +165,6 @@ func (c *blogDataService) UpdateBlog(ctx context.Context, in *UpdateBlogRequest,
 	return out, nil
 }
 
-func (c *blogDataService) TagSuggestion(ctx context.Context, in *TagSuggestionRequest, opts ...client.CallOption) (*TagSuggestionResponse, error) {
-	req := c.c.NewRequest(c.serviceName, "BlogData.TagSuggestion", in)
-	out := new(TagSuggestionResponse)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *blogDataService) CreateTag(ctx context.Context, in *CreateTagRequest, opts ...client.CallOption) (*CreateTagResponse, error) {
-	req := c.c.NewRequest(c.serviceName, "BlogData.CreateTag", in)
-	out := new(CreateTagResponse)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // Server API for BlogData service
 
 type BlogDataHandler interface {
@@ -201,8 +175,6 @@ type BlogDataHandler interface {
 	GetBlogDomains(context.Context, *GetBlogDomainsRequest, *GetBlogDomainsResponse) error
 	GetBlogs(context.Context, *GetBlogsRequest, *GetBlogsResponse) error
 	UpdateBlog(context.Context, *UpdateBlogRequest, *UpdateBlogResponse) error
-	TagSuggestion(context.Context, *TagSuggestionRequest, *TagSuggestionResponse) error
-	CreateTag(context.Context, *CreateTagRequest, *CreateTagResponse) error
 }
 
 func RegisterBlogDataHandler(s server.Server, hdlr BlogDataHandler, opts ...server.HandlerOption) {
@@ -239,12 +211,4 @@ func (h *BlogData) GetBlogs(ctx context.Context, in *GetBlogsRequest, out *GetBl
 
 func (h *BlogData) UpdateBlog(ctx context.Context, in *UpdateBlogRequest, out *UpdateBlogResponse) error {
 	return h.BlogDataHandler.UpdateBlog(ctx, in, out)
-}
-
-func (h *BlogData) TagSuggestion(ctx context.Context, in *TagSuggestionRequest, out *TagSuggestionResponse) error {
-	return h.BlogDataHandler.TagSuggestion(ctx, in, out)
-}
-
-func (h *BlogData) CreateTag(ctx context.Context, in *CreateTagRequest, out *CreateTagResponse) error {
-	return h.BlogDataHandler.CreateTag(ctx, in, out)
 }

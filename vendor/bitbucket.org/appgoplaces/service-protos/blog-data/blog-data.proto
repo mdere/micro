@@ -13,27 +13,6 @@ service BlogData {
   rpc GetBlogDomains(GetBlogDomainsRequest) returns (GetBlogDomainsResponse) {};
   rpc GetBlogs(GetBlogsRequest) returns (GetBlogsResponse) {};
   rpc UpdateBlog(UpdateBlogRequest) returns (UpdateBlogResponse) {};
-  rpc TagSuggestion(TagSuggestionRequest) returns (TagSuggestionResponse) {};
-  rpc CreateTag(CreateTagRequest) returns (CreateTagResponse) {};
-
-}
-
-message CreateTagRequest {
-  string tagName = 1;
-}
-
-message CreateTagResponse {
-  bool   success = 1;
-  string message = 2;
-}
-
-message TagSuggestionRequest {
-  string tagName = 1;
-}
-
-message TagSuggestionResponse {
-  repeated Tag tags    = 1;
-  string       message = 2;
 }
 
 message BlogDomain {

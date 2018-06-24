@@ -49,6 +49,15 @@ func (a *auth) Commands() []cli.Command {
 func (a *auth) Handler() plugin.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Log("ORIGIN", r.Header.Get("Origin"))
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+			w.Header().Set("Access-Control-Allow-Headers",
+				"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Access-Control-Allow-Origin")
+			// Stop here if its Preflighted OPTIONS request
+			if r.Method == "OPTIONS" {
+				return
+			}
 			for _, url := range exclude {
 				if url == strings.ToLower(r.RequestURI) {
 					h.ServeHTTP(w, r)
@@ -57,6 +66,7 @@ func (a *auth) Handler() plugin.Handler {
 			}
 			// GET Token and append to header
 			bearerToken := getBearerToken(r.Header["Authorization"])
+			log.Log(bearerToken)
 			if len(bearerToken) > 0 {
 				ok, userIdentification, err := parseToken(bearerToken)
 				log.Log(ok, userIdentification, err)
